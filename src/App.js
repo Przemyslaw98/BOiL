@@ -4,13 +4,9 @@ import Pagination from '@material-ui/lab/Pagination';
 import { makeStyles } from '@material-ui/core/styles';
 import './App.css';
 import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-import {usolve} from 'mathjs';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -64,12 +60,12 @@ function App() {
 export default App;
 
 function zad1(setTable) {
-    var D = [14, 17, 19];
+    var D = [19, 17, 14];
     var O = [20, 30];
-    var Kz = [10, 14, 11];
+    var Kz = [11, 14, 10];
     var Cs = [30, 25];
-    var Kt = [[8, 10], [9, 7], [12, 11]];
-    var lock = [[false, false], [false,false], [false, false]];
+    var Kt = [[12, 11], [9, 7], [8, 10]];
+    var lock = [[false, false], [false,true], [false, false]];
     var Z = [[0, 0], [0, 0], [0, 0]];
     var T = [[0, 0], [0, 0], [0, 0]];
     var i, j;
@@ -80,10 +76,22 @@ function zad1(setTable) {
             Z[i][j] = Cs[j] - Kz[i] - Kt[i][j];
         }
     }
+    for (i = 0; i < 3; i++){
+        if (lock[i].includes(true)){
+            for (j = 0; j < 2; j++) {
+                if (lock[i][j] === false) {
+                    var tmp = Math.min(D[i], O[j]);
+                    D[i] -= tmp;
+                    O[j] -= tmp;
+                    T[i][j] += tmp;
+                }
+            }
+        }
+    }
     for (i = 0; i < 3; i++) {
         for (j = 0; j < 2; j++) {
             if (lock[i][j] === false) {
-                var tmp = Math.min(D[i], O[j]);
+                tmp = Math.min(D[i], O[j]);
                 D[i] -= tmp;
                 O[j] -= tmp;
                 T[i][j] += tmp;
