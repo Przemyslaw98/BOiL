@@ -7,6 +7,14 @@ import Table from '@material-ui/core/Table';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
+import {zad1} from './zadanie1'
+import Grid from '@material-ui/core/Grid';
+import TextField from "@material-ui/core/TextField";
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Typography from '@material-ui/core/Typography';
+import numeric from 'numeric';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -17,11 +25,39 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
+var nodesS=[];
+var nodesE=[];
+var nodesT=[];
+var edges=[];
+
 function App() {
     const[table,setTable]=React.useState([['','','','','','','','','','']]);
     const[page,setPage]=React.useState(0);
+    const[text, setText] = React.useState('');
+    const[start, setStart] = React.useState('');
+    const[end, setEnd] = React.useState('');
+    const[cost, setCost] = React.useState('');
+    const[type,setType]=React.useState('0');
+    const[list,setList]=React.useState('');
+    const[nodeNumber,setNodeNumber]=React.useState(0);
+    const[edgeNumber,setEdgeNumber]=React.useState(0);
     const handleChange = (event, value) => {
         setPage(value-1);
+    };
+    const handleTextChange = (event) => {
+        setText(event.target.value);
+    };
+    const handleStartChange = (event) => {
+        setStart(event.target.value);
+    };
+    const handleEndChange = (event) => {
+        setEnd(event.target.value);
+    };
+    const handleCostChange = (event) => {
+        setCost(event.target.value);
+    };
+    const handleTypeChange = (event) => {
+        setType(event.target.value);
     };
   return (
     <div className="App">
@@ -30,7 +66,7 @@ function App() {
             color="primary"
             onClick={()=>{zad1(setTable)}}
         >
-            Run Script
+            Zadanie1
         </Button>
         <Table>
             <TableRow>
@@ -53,124 +89,340 @@ function App() {
             </TableRow>
         </Table>
         <Pagination count={table.length} page={page+1} onChange={handleChange}/>
+        <Grid container>
+            <Grid item>
+                <TextField
+                    size='small'
+                    label="Popyt/podaż"
+                    variant='outlined'
+                    value={text}
+                    onChange={handleTextChange}
+                />
+            </Grid>
+            <Grid item>
+                <RadioGroup value={type} onChange={handleTypeChange} row>
+                    <FormControlLabel value='0' control={<Radio color='primary'/>} label="Początkowy" />
+                    <FormControlLabel value='1' control={<Radio color='primary'/>} label="Końcowy" />
+                    <FormControlLabel value='2' control={<Radio color='primary'/>} label="Tranzytowy" />
+                </RadioGroup>
+            </Grid>
+            <Grid item>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={()=>{setText('');setStart('');setEnd('');setCost('');addNode(Number(type),Number(text),nodesS,nodesE,nodesT,edges,nodeNumber,setNodeNumber,setList)}}
+                >Dodaj węzeł</Button>
+            </Grid>
+        </Grid>
+        <Grid container>
+            <Grid item>
+                <TextField
+                    size='small'
+                    label="Początek"
+                    variant='outlined'
+                    value={start}
+                    onChange={handleStartChange}
+                />
+            </Grid>
+            <Grid item>
+                <TextField
+                    size='small'
+                    label="Koniec"
+                    variant='outlined'
+                    value={end}
+                    onChange={handleEndChange}
+                />
+            </Grid>
+            <Grid item>
+                <TextField
+                    size='small'
+                    label="Koszt"
+                    variant='outlined'
+                    value={cost}
+                    onChange={handleCostChange}
+                />
+            </Grid>
+            <Grid item>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={()=>{setText('');setStart('');setEnd('');setCost('');addEdge(Number(start),Number(end),Number(cost),nodesS,nodesE,nodesT,edges,edgeNumber,setEdgeNumber,setList)}}
+                >Dodaj krawędź</Button>
+            </Grid>
+        </Grid>
+        <Button
+            variant="contained"
+            color="primary"
+            onClick={()=>{clear(nodesS,nodesE,nodesT,edges,setNodeNumber,setEdgeNumber,setList)}}
+        >Wyczyść</Button><br/>
+        <Button
+            variant="contained"
+            color="primary"
+            onClick={()=>{zad2(nodesS,nodesE,nodesT,edges,list,setList)}}
+        >
+            Start
+        </Button><br/>
+        {list}
     </div>
   );
 }
 
 export default App;
 
-function zad1(setTable) {
-    var D = [19, 17, 14];
-    var O = [20, 30];
-    var Kz = [11, 14, 10];
-    var Cs = [30, 25];
-    var Kt = [[12, 11], [9, 7], [8, 10]];
-    var lock = [[false, false], [false,true], [false, false]];
-    var Z = [[0, 0], [0, 0], [0, 0]];
-    var T = [[0, 0], [0, 0], [0, 0]];
-    var i, j;
-    var D_o = [...D];
-    var O_o = [...O];
-    for (i = 0; i < 3; i++) {
-        for (j = 0; j < 2; j++) {
-            Z[i][j] = Cs[j] - Kz[i] - Kt[i][j];
-        }
+function addEdge(start,end,cost,nodesS,nodesE,nodesT,edges,edgeNumber,setEdgeNumber,setList){
+    edges.push({ID:edgeNumber,start:start,end:end,cost:cost});
+    setEdgeNumber(edges.length);
+    var list=[]
+    var i;
+    if (nodesS.length>0){
+        list.push(<Typography variant='body1'>Węzły początkowe:</Typography>);
+        for(i=0;i<nodesS.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {nodesS[i].ID}: {nodesS[i].limit}
+                </Typography>
+            );
     }
-    for (i = 0; i < 3; i++){
-        if (lock[i].includes(true)){
-            for (j = 0; j < 2; j++) {
-                if (lock[i][j] === false) {
-                    var tmp = Math.min(D[i], O[j]);
-                    D[i] -= tmp;
-                    O[j] -= tmp;
-                    T[i][j] += tmp;
-                }
-            }
-        }
+    if (nodesT.length>0){
+        list.push(<Typography variant='body1'>Węzły tranzytowe:</Typography>);
+        for(i=0;i<nodesT.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {nodesT[i].ID}
+                </Typography>
+            );
     }
-    for (i = 0; i < 3; i++) {
-        for (j = 0; j < 2; j++) {
-            if (lock[i][j] === false) {
-                tmp = Math.min(D[i], O[j]);
-                D[i] -= tmp;
-                O[j] -= tmp;
-                T[i][j] += tmp;
-            }
-        }
+    if (nodesE.length>0){
+        list.push(<Typography variant='body1'>Węzły końcowe:</Typography>);
+        for(i=0;i<nodesE.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {nodesE[i].ID}: {nodesE[i].limit}
+                </Typography>
+            );
     }
-    var table=[]
-    while(true) {
-        var alfa = [0, 0, 0];
-        var beta = [0, 0];
-        var doneA = [true, false, false]
-        var doneB = [false, false]
-        var n;
-        for(n=0;n<6;n++) {
-            for (i = 0; i < 3; i++) {
-                for (j = 0; j < 2; j++) {
-                    if (T[i][j] > 0) {
-                        if (doneA[i] === true) {
-                            beta[j] = Z[i][j] - alfa[i];
-                            doneB[j] = true;
-                        } else if (doneB[j] === true) {
-                            alfa[i] = Z[i][j] - beta[j];
-                            doneA[i] = true;
-                        }
-                    }
-                }
-            }
-            if (doneA.includes(false)) continue;
-            if (doneB.includes(false)) continue;
+    if (edges.length>0){
+        list.push(<Typography variant='body1'>Połączenia:</Typography>);
+        for(i=0;i<edges.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {edges[i].ID}: {edges[i].start} - {edges[i].end} - {edges[i].cost}
+                </Typography>
+            );
+    }
+    setList(list);
+}
+function addNode(where,value,nodesS,nodesE,nodesT,edges,nodeNumber,setNodeNumber,setList){
+    switch(where){
+        case 0:
+            nodesS.push({ID:nodeNumber,limit:value});
             break;
-        }
-        var delta = [[0, 0], [0, 0], [0, 0]];
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 2; j++) {
-                if (T[i][j] === 0)
-                    delta[i][j] = Z[i][j] - alfa[i] - beta[j]
-            }
-        }
-        var optimal = true
-        var I,J;
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 2; j++) {
-                if (delta[i][j] > 0&&lock[i][j]===false) {
-                    optimal = false;
-                    I=i;J=j;
-                    break;
-                }
-            }
-        }
-        table.push(makeTable(D_o,O_o,T,Kz,Cs,Kt));
-        if (optimal === true) break;
-        var Iprim,Jprim;
-        var found=false;
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 2; j++) {
-                if(i!==I&&j!==J&&T[i][J]>0&&T[I][j]>0&&T[i][j]>0){
-                    Iprim=i;Jprim=j;found=true;
-                }
-            }
-        }
-        if(found===false)break;
-        tmp=Math.min(T[I][Jprim],T[Iprim][J])
-        T[I][Jprim]-=tmp;T[Iprim][J]-=tmp;T[I][J]+=tmp;T[Iprim][Jprim]+=tmp;
+        case 1:
+            nodesE.push({ID:nodeNumber,limit:value});
+            break;
+        case 2:
+            nodesT.push({ID:nodeNumber});
+            break;
+        default:
     }
-    setTable(table);
+    var list=[]
+    var i;
+    if (nodesS.length>0){
+        list.push(<Typography variant='body1'>Węzły początkowe:</Typography>);
+        for(i=0;i<nodesS.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {nodesS[i].ID}: {nodesS[i].limit}
+                </Typography>
+            );
+    }
+    if (nodesT.length>0){
+        list.push(<Typography variant='body1'>Węzły tranzytowe:</Typography>);
+        for(i=0;i<nodesT.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {nodesT[i].ID}
+                </Typography>
+            );
+    }
+    if (nodesE.length>0){
+        list.push(<Typography variant='body1'>Węzły końcowe:</Typography>);
+        for(i=0;i<nodesE.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {nodesE[i].ID}: {nodesE[i].limit}
+                </Typography>
+            );
+    }
+    if (edges.length>0){
+        list.push(<Typography variant='body1'>Połączenia:</Typography>);
+        for(i=0;i<edges.length;i++)
+            list.push(
+                <Typography variant='body1'>
+                    {edges[i].ID}: {edges[i].start} - {edges[i].end} - {edges[i].cost}
+                </Typography>
+            );
+    }
+    setNodeNumber(nodesS.length+nodesE.length+nodesT.length);
+    setList(list)
+}
+function clear(nodesS,nodesE,nodesT,edges,setNodeNumber,setEdgeNumber,setList){
+    nodesS.length=0;
+    nodesE.length=0;
+    nodesT.length=0;
+    edges.length=0;
+    setNodeNumber(0);
+    setEdgeNumber(0);
+    setList('');
 }
 
-function makeTable(D,O,T,Kz,Cs,Kt){
-    var table=[];
-    table.push(D[0].toString()+'('+Kz[0]+')');
-    table.push(D[1].toString()+'('+Kz[1]+')');
-    table.push(D[2].toString()+'('+Kz[2]+')');
-    table.push(O[0].toString()+'('+Cs[0]+')');
-    table.push(T[0][0].toString()+'('+Kt[0][0]+')');
-    table.push(T[1][0].toString()+'('+Kt[1][0]+')');
-    table.push(T[2][0].toString()+'('+Kt[2][0]+')');
-    table.push(O[1].toString()+'('+Cs[1]+')');
-    table.push(T[0][1].toString()+'('+Kt[0][1]+')');
-    table.push(T[1][1].toString()+'('+Kt[1][1]+')');
-    table.push(T[2][1].toString()+'('+Kt[2][1]+')');
-    return table;
+function zad2(Ns,Ne,Nt,E,list,setList) {
+    var variables=[],i=0;
+    for (i = 0; i < E.length; i++)
+        variables.push(0-E[i].cost);
+    var constraints=[],constraintsR=[],j=0;
+    for (i = 0; i < Ns.length; i++) {
+        constraints.push([]);
+        j = 0;
+        for (j = 0; j < E.length; j++)
+            if (E[j].start === Ns[i].ID)
+                constraints[constraints.length-1].push(1);
+            else if (E[j].end === Ns[i].ID)
+                constraints[constraints.length-1].push(-1);
+            else
+                constraints[constraints.length-1].push(0);
+        constraintsR.push(Ns[i].limit)
+    }
+    for (i = 0; i < Ne.length; i++) {
+        constraints.push([]);
+        j = 0;
+        for (j = 0; j < E.length; j++)
+            if (E[j].start === Ne[i].ID)
+                constraints[constraints.length-1].push(1);
+            else if (E[j].end === Ne[i].ID)
+                constraints[constraints.length-1].push(-1);
+            else
+                constraints[constraints.length-1].push(0);
+        constraintsR.push(0-Ne[i].limit)
+    }
+    for (i = 0; i < Nt.length; i++) {
+        constraints.push([]);
+        j = 0;
+        for (j = 0; j < E.length; j++)
+            if (E[j].start === Nt[i].ID)
+                constraints[constraints.length-1].push(1);
+            else if (E[j].end === Nt[i].ID)
+                constraints[constraints.length-1].push(-1);
+            else
+                constraints[constraints.length-1].push(0);
+        constraintsR.push(0)
+        constraints.push([]);
+        j = 0;
+        for (j = 0; j < E.length; j++)
+            if (E[j].start === Nt[i].ID)
+                constraints[constraints.length-1].push(-1);
+            else if (E[j].end === Nt[i].ID)
+                constraints[constraints.length-1].push(1);
+            else
+                constraints[constraints.length-1].push(0);
+        constraintsR.push(0)
+    }
+    var lp;
+    lp = numeric.solveLP(variables,constraints,constraintsR,undefined,undefined,10000);
+    console.log(lp);
+    console.log(variables);
+    console.log(constraints);
+    console.log(constraintsR);
 }
+
+//     var lpsolve = require('lp_solve');
+//     var Row = lpsolve.Row;
+//     console.log(Row);
+//     var objective = new Row();
+//     var lp = new lpsolve.LinearProgram();
+//     var variables = [];
+//     var i;
+//     for (i = 0; i < E.length; i++) {
+//         variables.push(lp.addColumn('x' + i.toString(), true));
+//         Row.Add(variables[i], E[i].cost);
+//     }
+//     lp.setObjective(objective);
+//     var constraint, j = 0;
+//     for (i = 0; i < Ns.length; i++) {
+//         constraint = new Row();
+//         j = 0;
+//         for (j = 0; j < E.length; j++)
+//             if (E[j].start === Ns[i].ID)
+//                 constraint.Add(variables[j], 1)
+//             else if (E[j].end === Ns[i].ID)
+//                 constraint.Subtract(variables[j], 1)
+//         lp.addConstraint(constraint, 'LE', Ns[i].limit, 'constraint' + Ns[i].ID.toString())
+//     }
+//     for (i = 0; i < Ne.length; i++) {
+//         constraint = new Row();
+//         j = 0;
+//         for (j = 0; j < E.length; j++)
+//             if (E[j].start === Ne[i].ID)
+//                 constraint.Subtract(variables[j], 1)
+//             else if (E[j].end === Ne[i].ID)
+//                 constraint.Add(variables[j], 1)
+//         lp.addConstraint(constraint, 'GE', Ne[i].limit, 'constraint' + Ne[i].ID.toString())
+//     }
+//     for (i = 0; i < Nt.length; i++) {
+//         constraint = new Row();
+//         j = 0;
+//         for (j = 0; j < E.length; j++)
+//             if (E[j].start === Nt[i].ID)
+//                 constraint.Add(variables[j], 1)
+//             else if (E[j].end === Nt[i].ID)
+//                 constraint.Subtract(variables[j], 1)
+//         lp.addConstraint(constraint, 'E', 0, 'constraint' + Nt[i].ID.toString())
+//     }
+//     console.log(lp.dumpProgram());
+//     console.log(lp.solve());
+//     console.log(lp);
+//
+// }
+
+
+
+
+
+//     require('glpk.js').then(glpk => {
+//             var i, j;
+//             let json = {name: 'LP', objective: {direction: glpk.GLP_MIN, name: 'obj', vars: []}, subjectTo: [],};
+//             for (i = 0; i < Ns.length; i++) {
+//                 json.subjectTo.push({
+//                     name: 'cons' + i.toString(),
+//                     vars: [],
+//                     bnds: {type: glpk.GLP_UP, ub: Ns[i].limit, lb: 0}
+//                 });
+//                 for (j = 0; j < E.length; j++)
+//                     if (E[j].start === Ns[i].ID)
+//                         json.subjectTo[json.subjectTo.length - 1].vars.push({name: 'x' + E[j].ID.toString(), coef: 1});
+//                     else if (E[j].end === Ns[i].ID)
+//                         json.subjectTo[json.subjectTo.length - 1].vars.push({name: 'x' + E[j].ID.toString(), coef: -1});
+//             }
+//             for (i = 0; i < Ne.length; i++) {
+//                 json.subjectTo.push({name: 'cons' + i.toString(), vars: [], bnds: {type: glpk.GLP_UP, lb: Ne[i].limit}});
+//                 for (j = 0; j < E.length; j++)
+//                     if (E[j].start === Ne[i].ID)
+//                         json.subjectTo[json.subjectTo.length - 1].vars.push({name: 'x' + E[j].ID.toString(), coef: -1});
+//                     else if (E[j].end === Ne[i].ID)
+//                         json.subjectTo[json.subjectTo.length - 1].vars.push({name: 'x' + E[j].ID.toString(), coef: 1});
+//             }
+//             for (i = 0; i < Nt.length; i++) {
+//                 json.subjectTo.push({name: 'cons' + i.toString(), vars: [], bnds: {type: glpk.GLP_UP, ub: 0, lb: 0}});
+//                 for (j = 0; j < E.length; j++)
+//                     if (E[j].start === Nt[i].ID)
+//                         json.subjectTo[json.subjectTo.length - 1].vars.push({name: 'x' + E[j].ID.toString(), coef: 1});
+//                     else if (E[j].end === Nt[i].ID)
+//                         json.subjectTo[json.subjectTo.length - 1].vars.push({name: 'x' + E[j].ID.toString(), coef: -1});
+//             }
+//             for (i = 0; i < E.length; i++)
+//                 json.objective.vars.push({name: 'x' + E[i].ID.toString(), coef: E[i].cost});
+//             console.log(json);
+//             console.log(glpk.solve(json, glpk.GLP_MSG_ALL));
+//         }
+//     );
+// }
