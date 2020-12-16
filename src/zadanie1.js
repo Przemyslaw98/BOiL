@@ -1,10 +1,10 @@
-export function zad1(setTable) {
+export function zad1(setTable,setGain) {
     var D = [19, 17, 14];
     var O = [20, 30];
     var Kz = [11, 14, 10];
     var Cs = [30, 25];
     var Kt = [[12, 11], [9, 7], [8, 10]];
-    var lock = [[false, false], [false,true], [false, false]];
+    var lock = [[true, false], [false,false], [false, false]];
 
     var Z = [[0, 0], [0, 0], [0, 0]];
     var T = [[0, 0], [0, 0], [0, 0]];
@@ -100,6 +100,11 @@ export function zad1(setTable) {
         T[I][Jprim]-=tmp;T[Iprim][J]-=tmp;T[I][J]+=tmp;T[Iprim][Jprim]+=tmp;
     }
     setTable(table);
+    var gain=0;
+    for(i=0;i<3;i++)
+        for(j=0;j<2;j++)
+            gain+=T[i][j]*Z[i][j]
+    setGain(gain);
 }
 
 function makeTable(D,O,T,Kz,Cs,Kt){

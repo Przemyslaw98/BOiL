@@ -39,8 +39,10 @@ function App() {
     const[cost, setCost] = React.useState('');
     const[type,setType]=React.useState('0');
     const[list,setList]=React.useState('');
+    const[solution,setSolution]=React.useState('');
     const[nodeNumber,setNodeNumber]=React.useState(0);
     const[edgeNumber,setEdgeNumber]=React.useState(0);
+    const[gain,setGain]=React.useState('');
     const handleChange = (event, value) => {
         setPage(value-1);
     };
@@ -61,10 +63,11 @@ function App() {
     };
   return (
     <div className="App">
+        <Typography variant='body1'>Zysk całkowity: {gain}</Typography>
         <Button
             variant="contained"
             color="primary"
-            onClick={()=>{zad1(setTable)}}
+            onClick={()=>{zad1(setTable,setGain)}}
         >
             Zadanie1
         </Button>
@@ -158,7 +161,7 @@ function App() {
         <Button
             variant="contained"
             color="primary"
-            onClick={()=>{zad2(nodesS,nodesE,nodesT,edges,list,setList)}}
+            onClick={()=>{zad2(nodesS,nodesE,nodesT,edges,setSolution)}}
         >
             Start
         </Button><br/>
@@ -276,64 +279,142 @@ function clear(nodesS,nodesE,nodesT,edges,setNodeNumber,setEdgeNumber,setList){
     setList('');
 }
 
-function zad2(Ns,Ne,Nt,E,list,setList) {
-    var variables=[],i=0;
-    for (i = 0; i < E.length; i++)
-        variables.push(0-E[i].cost);
-    var constraints=[],constraintsR=[],j=0;
-    for (i = 0; i < Ns.length; i++) {
-        constraints.push([]);
-        j = 0;
-        for (j = 0; j < E.length; j++)
+function zad2(Ns,Ne,Nt,E,setSolution) {
+    const SimpleSimplex = require('simple-simplex');
+    var json={objective:{},constraints:[],optimizationType:'max'};
+    var i,j;
+    for(i=0;i<E.length;i++) {
+        json.objective['x' + i.toString()] = 0 - E[i].cost;
+        json.constraints.push({namedVector:{},constraint:'>=',constant:0});
+        j=0
+        for(j=0;j<E.length;j++)
+            json.constraints[i].namedVector['x'+j.toString()]=0;
+        json.constraints[i].namedVector['x'+i.toString()]=1;
+    }
+    for (i = 0; i < Ns.length; i++){
+        json.constraints.push({namedVector:{},constraint:'<=',constant:Ns[i].limit});
+        j=0;
+        for (j = 0; j < E.length; j++){
             if (E[j].start === Ns[i].ID)
-                constraints[constraints.length-1].push(1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=1;
             else if (E[j].end === Ns[i].ID)
-                constraints[constraints.length-1].push(-1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=-1;
             else
-                constraints[constraints.length-1].push(0);
-        constraintsR.push(Ns[i].limit)
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=0;
+        }
     }
-    for (i = 0; i < Ne.length; i++) {
-        constraints.push([]);
-        j = 0;
-        for (j = 0; j < E.length; j++)
+    for (i = 0; i < Ne.length; i++){
+        json.constraints.push({namedVector:{},constraint:'>=',constant:Ne[i].limit});
+        j=0;
+        for (j = 0; j < E.length; j++){
             if (E[j].start === Ne[i].ID)
-                constraints[constraints.length-1].push(1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=-1;
             else if (E[j].end === Ne[i].ID)
-                constraints[constraints.length-1].push(-1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=1;
             else
-                constraints[constraints.length-1].push(0);
-        constraintsR.push(0-Ne[i].limit)
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=0;
+        }
     }
-    for (i = 0; i < Nt.length; i++) {
-        constraints.push([]);
-        j = 0;
-        for (j = 0; j < E.length; j++)
+    for (i = 0; i < Nt.length; i++){
+        json.constraints.push({namedVector:{},constraint:'<=',constant:0});
+        j=0;
+        for (j = 0; j < E.length; j++){
             if (E[j].start === Nt[i].ID)
-                constraints[constraints.length-1].push(1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=1;
             else if (E[j].end === Nt[i].ID)
-                constraints[constraints.length-1].push(-1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=-1;
             else
-                constraints[constraints.length-1].push(0);
-        constraintsR.push(0)
-        constraints.push([]);
-        j = 0;
-        for (j = 0; j < E.length; j++)
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=0;
+        }
+        json.constraints.push({namedVector:{},constraint:'>=',constant:0});
+        j=0;
+        for (j = 0; j < E.length; j++){
             if (E[j].start === Nt[i].ID)
-                constraints[constraints.length-1].push(-1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=1;
             else if (E[j].end === Nt[i].ID)
-                constraints[constraints.length-1].push(1);
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=-1;
             else
-                constraints[constraints.length-1].push(0);
-        constraintsR.push(0)
+                json.constraints[json.constraints.length-1].namedVector['x'+j.toString()]=0;
+        }
     }
-    var lp;
-    lp = numeric.solveLP(variables,constraints,constraintsR,undefined,undefined,10000);
-    console.log(lp);
-    console.log(variables);
-    console.log(constraints);
-    console.log(constraintsR);
+    console.log(json);
+    const solver= new SimpleSimplex(json);
+    const result = solver.solve({
+        methodName: 'simplex',
+    });
+    console.log(result)
+    var solution=[];
+    solution.push(<Typography variant='h1'>Wynik:{result.solution.optimum}</Typography>);
+    solution.push(<Typography variant='body1'>{result.solution.coefficients}</Typography>);
+    setSolution(solution);
 }
+
+
+
+//     var variables=[],i=0;
+//     for (i = 0; i < E.length; i++)
+//         variables.push(0-E[i].cost);
+//     var constraints=[],constraintsR=[],equalities=[],equalitiesR=[],j=0;
+//     for (i = 0; i < variables.length; i++){
+//         j=0;
+//         constraints.push([]);
+//         for (j = 0; j < variables.length; j++){
+//             constraints[i].push(0);
+//         }
+//         constraints[i][i]=-1;
+//         constraintsR.push(0);
+//     }
+//     for (i = 0; i < Ns.length; i++) {
+//         constraints.push([]);
+//         j = 0;
+//         for (j = 0; j < E.length; j++)
+//             if (E[j].start === Ns[i].ID)
+//                 constraints[constraints.length-1].push(1);
+//             else if (E[j].end === Ns[i].ID)
+//                 constraints[constraints.length-1].push(-1);
+//             else
+//                 constraints[constraints.length-1].push(0);
+//         constraintsR.push(Ns[i].limit)
+//     }
+//     for (i = 0; i < Ne.length; i++) {
+//         constraints.push([]);
+//         j = 0;
+//         for (j = 0; j < E.length; j++)
+//             if (E[j].start === Ne[i].ID)
+//                 constraints[constraints.length-1].push(1);
+//             else if (E[j].end === Ne[i].ID)
+//                 constraints[constraints.length-1].push(-1);
+//             else
+//                 constraints[constraints.length-1].push(0);
+//         constraintsR.push(0-Ne[i].limit)
+//     }
+//     for (i = 0; i < Nt.length; i++) {
+//         equalities.push([]);
+//         j = 0;
+//         for (j = 0; j < E.length; j++)
+//             if (E[j].start === Nt[i].ID)
+//                 equalities[equalities.length-1].push(1);
+//             else if (E[j].end === Nt[i].ID)
+//                 equalities[equalities.length-1].push(-1);
+//             else
+//                 equalities[equalities.length-1].push(0);
+//         equalitiesR.push(0)
+//         equalities.push([]);
+//     }
+//     var lp;
+//     if (constraints.length===0) constraints=undefined;
+//     if (constraintsR.length===0) constraintsR=undefined;
+//     if (equalities.length===0) equalities=undefined;
+//     if (equalitiesR.length===0) equalitiesR=undefined;
+//
+//     lp = numeric.solveLP(variables,constraints,constraintsR,equalities,equalitiesR,10000);
+//     console.log(lp);
+//     console.log(variables);
+//     console.log(constraints);
+//     console.log(constraintsR);
+//     console.log(equalities);
+//     console.log(equalitiesR);
+// }
 
 //     var lpsolve = require('lp_solve');
 //     var Row = lpsolve.Row;
